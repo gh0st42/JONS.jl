@@ -28,23 +28,22 @@ function simulate()
   #end
 
   #movements = parse_one_movement("data/10nodesRWP.one")
-  movements = parse_one_movement("data/large_1.one")
+  one_scenario = parse_one_movement("data/large_1.one")
+  movements = one_scenario.movements
   last_move_time = Int(ceil(last(movements).time))
 
   # configure network
   network = NetworkSettings(100, 54000000)
 
   # configure nodes
-  router_template = Router(10000, 2.0)
   epidemic = EpidemicRouter(10000, 2.0)
-  println(epidemic)
-  nodes = generate_nodes(17, network, epidemic)
+  nodes = generate_nodes(one_scenario.nn, network, epidemic)
 
   msggenconfig = MessageGeneratorConfig("M", (80, 120), (20.0, 20.0), (6, 15), (17, 17), Burst)
   config = Dict()
   #config["visualize"] = true
   #config["poslogger"] = false
-  sim = NetSim(last_move_time + 1, (WORLD_SIZE[1], WORLD_SIZE[2]), nodes, movements, MessageGeneratorConfig[msggenconfig], config)
+  sim = NetSim(one_scenario.duration + 1, (one_scenario.w, one_scenario.h), nodes, one_scenario.movements, MessageGeneratorConfig[msggenconfig], config)
 
   sim_init(sim)
 
@@ -57,5 +56,3 @@ function simulate()
 end
 
 @time simulate()
-
-#jONS_test()\

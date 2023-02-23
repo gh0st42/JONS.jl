@@ -1,4 +1,5 @@
 include("epidemic.jl")
+include("sprayandwait.jl")
 
 function Base.show(io::IO, router::Router)
   print(io, "Router with capacity ", router.capacity, " and ", length(router.store), " messages")
@@ -11,7 +12,7 @@ end
     router_update_neighbors(router, node, sim.nodes)
     new_peers = setdiff(router.peers, old_peers)
     for peer in new_peers
-      router_on_new_peer(env, sim, node.id, peer)
+      epidemic_on_new_peer(env, sim, node.id, peer)
     end
     @yield timeout(env, router.discovery_interval)
   end

@@ -48,7 +48,18 @@ function move_init(env::Environment, nodes::Array{Node}, movements::Array{Moveme
   end
 end
 
+mutable struct OneScenario
+  duration::Float64
+  nn::Int
+  w::Float32
+  h::Float32
+  movements::Array{MovementStep}
+end
+
+Base.show(io::IO, scenario::OneScenario) = print(io, "OneScenario(duration=", scenario.duration, ", nn=", scenario.nn, ", w=", scenario.w, ", h=", scenario.h, ", #movements=", length(scenario.movements), ")")
+
 function parse_one_movement(file::String)
+  scenario = OneScenario(0.0, 0, 0.0, 0.0, MovementStep[])
   lines = readlines(file)
   movements = MovementStep[]
   for line in lines
@@ -57,11 +68,19 @@ function parse_one_movement(file::String)
       if line[1] != '#'
         time = parse(Float64, split_line[1])
         id = parse(Int16, split_line[2]) + 1
+        scenario.nn = max(scenario.nn, id)
         x = parse(Float32, split_line[3])
         y = parse(Float32, split_line[4])
-        push!(movements, MovementStep(time, id, x, y))
+        push!(scenario.movements, MovementStep(time, id, x, y))
+      end
+    elseif length(split_line) == 6
+      if line[1] != '#'
+        scenario.duration = parse(Float64, split_line[2])
+        #scenario.nn = parse(Int16, split_line[2]) + 1
+        scenario.w = parse(Float32, split_line[4])
+        scenario.h = parse(Float32, split_line[6])
       end
     end
   end
-  return movements
+  return scenario
 end

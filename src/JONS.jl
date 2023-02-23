@@ -22,11 +22,10 @@ include("simulation.jl")
 include("messagegenerator.jl")
 include("visualiaze.jl")
 
-export Node, MovementStep, MessageGeneratorConfig, Message, NetworkSettings, Router, NetSim, jONS_test, EventGeneratorType, Single, Burst
-export message_event_generator, message_burst_generator, sim_report, sim_run, sim_init, parse_one_movement, animator, generate_nodes, EpidemicRouter
-
-function jONS_test()
-  println("jONS test")
-end
+export struct_to_dataframe
+export Node, MovementStep, Message, NetworkSettings, Router, EpidemicRouter, SprayAndWaitRouter
+export MessageGeneratorConfig, message_event_generator, message_burst_generator, EventGeneratorType, Single, Burst
+export NetSim, sim_report, sim_run, sim_init, parse_one_movement, animator, generate_nodes, OneScenario, sim_report_df, sim_viz
+export bundle_stats, net_stats
 
 end

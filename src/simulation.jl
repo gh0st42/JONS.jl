@@ -1,4 +1,5 @@
 import Dates
+using DataFrames
 
 function sim_init(sim::NetSim)
   @info "initializing simulation"
@@ -82,4 +83,16 @@ function sim_report(sim::NetSim)
     @info "generating visualization"
     gif(sim.anim, fps=10)
   end
+end
+
+function sim_viz(sim::NetSim)
+  if haskey(sim.config, "visualize") && sim.config["visualize"]
+    gif(sim.anim, fps=10)
+  end
+end
+
+function sim_report_df(sim::NetSim)
+  netstats = struct_to_dataframe(sim.netstats)
+  routingstats = struct_to_dataframe(sim.routingstats)
+  return netstats, routingstats
 end

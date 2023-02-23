@@ -33,3 +33,29 @@ function Base.show(io::IO, routingstats::RoutingStats)
 
 end
 
+function struct_to_dataframe(s)
+  fields = fieldnames(typeof(s))
+  still_vector = [getfield(s, field) for field in fields]
+  return DataFrame(hcat(still_vector...), collect(fields))
+end
+
+function bundle_stats(sim::NetSim)
+  return Dict("created" => sim.routingstats.created,
+    "started" => sim.routingstats.started,
+    "relayed" => sim.routingstats.relayed,
+    "aborted" => sim.routingstats.aborted,
+    "dropped" => sim.routingstats.dropped,
+    "removed" => sim.routingstats.removed,
+    "dups" => sim.routingstats.dups,
+    "delivered" => sim.routingstats.delivered,
+    "delivery_prob" => sim.routingstats.delivered / sim.routingstats.created,
+    "overhead_ratio" => (sim.routingstats.relayed - sim.routingstats.delivered) / sim.routingstats.delivered,
+    "hops_avg" => sim.routingstats.hops / sim.routingstats.delivered,
+    "latency" => sim.routingstats.latency / sim.routingstats.delivered)
+end
+
+function net_stats(sim::NetSim)
+  return Dict("tx" => sim.netstats.tx,
+    "rx" => sim.netstats.rx,
+    "drop" => sim.netstats.drop)
+end
