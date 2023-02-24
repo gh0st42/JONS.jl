@@ -96,7 +96,6 @@ function epidemic_on_recv(env::Environment, sim::NetSim, src::Int16, myId::Int16
 end
 
 function epidemic_init(sim::NetSim, node::Node)
-  @process router_discovery(sim.env, sim, node.router.core, node)
 end
 
 function epidemic_on_new_peer(env::Environment, sim::NetSim, mynodid::Int16, new_peer::Int16)
@@ -110,5 +109,5 @@ end
 
 function EpidemicRouter(capacity::Int, discovery_interval::Float64)::RouterImpl
   router = Router(capacity, discovery_interval)
-  return RouterImpl("Epidemic", router, epidemic_init, epidemic_on_recv, epidemic_add)
+  return RouterImpl("Epidemic", router, epidemic_init, epidemic_on_recv, epidemic_on_new_peer, epidemic_add)
 end

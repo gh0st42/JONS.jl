@@ -78,11 +78,14 @@ struct RouterImpl
   init::Function
   # Receive message callback
   onrecv::Function
+  # New peer discovered
+  onpeer::Function
   # Add message to router
   add::Function
 end
 
-Base.copy(r::RouterImpl) = RouterImpl(r.name, copy(r.core), r.init, r.onrecv, r.add)
+Base.copy(r::RouterImpl) = RouterImpl(r.name, copy(r.core), r.init, r.onrecv, r.onpeer, r.add)
+Base.show(io::IO, r::RouterImpl) = print(io, r.name)
 
 mutable struct Node
   id::Int16
@@ -127,6 +130,7 @@ mutable struct NetSim
   duration::Float64
   world::Tuple{Float32,Float32}
   nodes::Vector{Node}
+  move_idx::Int
   movements::Vector{MovementStep}
   msggens::Vector{MessageGeneratorConfig}
   netstats::NetStats
@@ -135,7 +139,7 @@ mutable struct NetSim
   config::Dict
   function NetSim(duration::Float64, world::Tuple{Float32,Float32}, nodes::Vector{Node}, movements::Vector{MovementStep}, msggens::Vector{MessageGeneratorConfig}=MessageGeneratorConfig[], config::Dict=Dict{String,Any}())
     env = Simulation()
-    new(env, duration, world, nodes, movements, msggens, NetStats(), RoutingStats(), Animation(), config)
+    new(env, duration, world, nodes, 1, movements, msggens, NetStats(), RoutingStats(), Animation(), config)
   end
 end
 

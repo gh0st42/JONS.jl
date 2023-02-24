@@ -12,7 +12,7 @@ end
     router_update_neighbors(router, node, sim.nodes)
     new_peers = setdiff(router.peers, old_peers)
     for peer in new_peers
-      epidemic_on_new_peer(env, sim, node.id, peer)
+      node.router.onpeer(env, sim, node.id, peer)
     end
     @yield timeout(env, router.discovery_interval)
   end
@@ -22,3 +22,6 @@ function router_update_neighbors(router::Router, node::Node, nodes::Vector{Node}
   router.peers = copy(node.neighbors)
 end
 
+function router_init(sim::NetSim, node::Node)
+  @process router_discovery(sim.env, sim, node.router.core, node)
+end

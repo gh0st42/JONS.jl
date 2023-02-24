@@ -36,7 +36,7 @@ end
 @resumable function sprayandwait_forward(env::Environment, sim::NetSim, myId::Int16, message::Message)
     router = sim.nodes[myId].router.core
     if message.dst in router.peers && !sprayandwait_has_been_spread(sim, myId, message.dst, message)
-        println("attempting direct delivery of message ", message.id, " from ", message.src, " to ", message.dst, " via ", myId)
+        #println("attempting direct delivery of message ", message.id, " from ", message.src, " to ", message.dst, " via ", myId)
         sim.routingstats.started += 1
         p = @process node_send(env, sim, myId, message.dst, message)
         #@yield p
@@ -44,11 +44,11 @@ end
 
         deleteat!(router.store, findall(x -> x == message, router.store))
     elseif message.metadata["copies"] > 1
-        println("SPRAYING", message.metadata["copies"])
+        #println("SPRAYING", message.metadata["copies"])
         for n in router.peers
             if message.metadata["copies"] <= 1
                 # We have spread the message to enough nodes, entering WAIT phase
-                println("Entering WAIT phase")
+                #println("Entering WAIT phase")
                 return
             end
             neighbor = sim.nodes[n]
@@ -82,7 +82,7 @@ function sprayandwait_on_recv(env::Environment, sim::NetSim, src::Int16, myId::I
             push!(router.store, message)
             message.hops += 1
             #push!(router.store, message)
-            println("SprayAndWaitRouter received message ", message.id, " from ", src, " for ", message.dst, " on ", myId, " with ", message.metadata["copies"], " copies")
+            #println("SprayAndWaitRouter received message ", message.id, " from ", src, " for ", message.dst, " on ", myId, " with ", message.metadata["copies"], " copies")
             if message.dst == myId
                 #println("Message ", message.id, " delivered to ", myId)
                 sim.routingstats.delivered += 1
@@ -98,7 +98,6 @@ function sprayandwait_on_recv(env::Environment, sim::NetSim, src::Int16, myId::I
 end
 
 function sprayandwait_init(sim::NetSim, node::Node)
-    @process router_discovery(sim.env, sim, node.router.core, node)
 end
 
 function sprayandwait_on_new_peer(env::Environment, sim::NetSim, mynodid::Int16, new_peer::Int16)
@@ -112,5 +111,5 @@ function SprayAndWaitRouter(capacity::Int, discovery_interval::Float64, copies::
     router = Router(capacity, discovery_interval)
     router.config["copies"] = copies
     router.config["binary"] = binary
-    return RouterImpl("SprayAndWait", router, sprayandwait_init, sprayandwait_on_recv, sprayandwait_add)
+    return RouterImpl("SprayAndWait", router, sprayandwait_init, sprayandwait_on_recv, sprayandwait_on_new_peer, sprayandwait_add)
 end

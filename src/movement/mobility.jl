@@ -2,7 +2,7 @@
 #using SimJulia
 
 
-@resumable function move_next(env::Environment, nodes::Array{Node}, movements::Array{MovementStep}, node::Node, step::MovementStep)
+@resumable function move_next(env::Environment, sim::NetSim, node::Node, step::MovementStep)
   @yield timeout(env, step.time - now(env))
   #println(now(env), " Moving node ", node.id, " to (", step.x, ", ", step.y, ")")
   node.x = step.x
@@ -11,40 +11,43 @@
 
   cnt = 0
   #if length(movements) > 0
-  while length(movements) > 0 && cnt < 1
-    next_step = popfirst!(movements)
+  while sim.move_idx <= length(sim.movements) && cnt < 1
+    next_step = sim.movements[sim.move_idx]
+    sim.move_idx += 1
     if next_step.time == step.time
-      nodes[next_step.id].x = next_step.x
-      nodes[next_step.id].y = next_step.y
+      sim.nodes[next_step.id].x = next_step.x
+      sim.nodes[next_step.id].y = next_step.y
     else
-      @process move_next(env, nodes, movements, nodes[next_step.id], next_step)
+      @process move_next(env, sim, sim.nodes[next_step.id], next_step)
       cnt += 1
     end
   end
 
-  for node in nodes
-    node_calc_neighbors(node, nodes)
+  for n in sim.nodes
+    node_calc_neighbors(n, sim.nodes)
     #println(" Node ", node.id, " has neighbors: ", map(n -> n.id, node.neighbors))
   end
 end
 
-function move_init(env::Environment, nodes::Array{Node}, movements::Array{MovementStep})
-  if length(movements) > 0
-    first_step = popfirst!(movements)
+function move_init(sim::NetSim)
+  if sim.move_idx <= length(sim.movements)
+    first_step = sim.movements[sim.move_idx]
+    sim.move_idx += 1
     while first_step.time == 0
-      nodes[first_step.id].x = first_step.x
-      nodes[first_step.id].y = first_step.y
-      if length(movements) > 0
-        first_step = popfirst!(movements)
+      sim.nodes[first_step.id].x = first_step.x
+      sim.nodes[first_step.id].y = first_step.y
+      if sim.move_idx <= length(sim.movements)
+        first_step = sim.movements[sim.move_idx]
+        sim.move_idx += 1
       else
         return
       end
     end
-    for node in nodes
-      node_calc_neighbors(node, nodes)
+    for node in sim.nodes
+      node_calc_neighbors(node, sim.nodes)
     end
 
-    @process move_next(env, nodes, movements, nodes[first_step.id], first_step)
+    @process move_next(sim.env, sim, sim.nodes[first_step.id], first_step)
   end
 end
 

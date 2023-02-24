@@ -51,7 +51,7 @@ function bundle_stats(sim::NetSim)
     "delivery_prob" => sim.routingstats.delivered / sim.routingstats.created,
     "overhead_ratio" => (sim.routingstats.relayed - sim.routingstats.delivered) / sim.routingstats.delivered,
     "hops_avg" => sim.routingstats.hops / sim.routingstats.delivered,
-    "latency" => sim.routingstats.latency / sim.routingstats.delivered)
+    "latency_avg" => sim.routingstats.latency / sim.routingstats.delivered)
 end
 
 function net_stats(sim::NetSim)
