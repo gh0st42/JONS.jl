@@ -59,7 +59,66 @@ mutable struct OneScenario
   movements::Array{MovementStep}
 end
 
+Base.show(io::IO, move::MovementStep) = print(io, "Step(t=", move.time, " n=", move.id, " x=", move.x, " y=", move.y, ")")
+
 Base.show(io::IO, scenario::OneScenario) = print(io, "OneScenario(duration=", scenario.duration, ", nn=", scenario.nn, ", w=", scenario.w, ", h=", scenario.h, ", #movements=", length(scenario.movements), ")")
+
+function generate_randomwaypoint_movement(duration::Float64, nn::Int, w::Float32, h::Float32, min_speed::Float32, max_speed::Float32, min_pause::Float32, max_pause::Float32)
+  movements = MovementStep[]
+  for i in 1:nn
+    cur_time = 0.0
+    x = rand() * w
+    y = rand() * h
+    push!(movements, MovementStep(cur_time, i, x, y))
+
+    while cur_time <= duration
+      way_x = rand() * w
+      way_y = rand() * h
+      speed = rand() * (max_speed - min_speed) + min_speed
+      pause = ceil(rand() * (max_pause - min_pause) + min_pause)
+      cur_time += pause
+      dist = sqrt((way_x - x)^2 + (way_y - y)^2)
+      time = dist / speed
+      step_x = (way_x - x) / time
+      step_y = (way_y - y) / time
+      for j in 1:time
+        if cur_time + j >= duration
+          break
+        end
+        x += step_x
+        y += step_y
+        push!(movements, MovementStep(ceil(float(cur_time + j)), i, x, y))
+      end
+      cur_time += time
+    end
+  end
+  sort!(movements, by=x -> x.time)
+  return OneScenario(duration, nn, w, h, movements)
+end
+
+function plot_one_scenario(scenario::OneScenario)
+  plt = nothing
+  for node in 1:scenario.nn
+    x = []
+    y = []
+    for step in scenario.movements
+      if step.id != node
+        continue
+      end
+      push!(x, step.x)
+      push!(y, step.y)
+    end
+    if node == 1
+      plt = scatter(x, y, legend=true, markerstrokealpha=0.0, markerstrokewidth=0.0, xlims=[0, scenario.w], ylims=[0, scenario.h], label="Node $node")
+    else
+      plt = scatter!(x, y, legend=true, markerstrokewidth=0.0, label="Node $node")
+    end
+  end
+  if plt !== nothing
+    display(plt)
+  end
+  return plt
+end
 
 function parse_one_movement(file::String)
   scenario = OneScenario(0.0, 0, 0.0, 0.0, MovementStep[])
