@@ -5,6 +5,27 @@ function Base.show(io::IO, router::Router)
   print(io, "Router with capacity ", router.capacity, " and ", length(router.store), " messages")
 end
 
+function router_remember(sim::NetSim, routerId::Int16, remote::Int16, message::Message)
+  router = sim.nodes[routerId].router.core
+  if !haskey(router.history, message.id)
+    router.history[message.id] = []
+  end
+  router.history[message.id] = append!(router.history[message.id], remote)
+end
+
+function router_msg_known(sim::NetSim, routerId::Int16, message::Message)::Bool
+  router = sim.nodes[routerId].router.core
+  return haskey(router.history, message.id)
+end
+
+function router_has_been_spread(sim::NetSim, routerId::Int16, remote::Int16, message::Message)::Bool
+  router = sim.nodes[routerId].router.core
+  #println("HIST: ", length(keys(router.history)))
+  if !haskey(router.history, message.id)
+    return false
+  end
+  return remote in router.history[message.id]
+end
 
 @resumable function router_discovery(env::Environment, sim::NetSim, router::Router, node::Node)
   while true

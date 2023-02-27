@@ -11,36 +11,14 @@ function sprayandwait_add(sim::NetSim, routerId::Int16, message::Message)
     end
 end
 
-function sprayandwait_remember(sim::NetSim, routerId::Int16, remote::Int16, message::Message)
-    router = sim.nodes[routerId].router.core
-    if !haskey(router.history, message.id)
-        router.history[message.id] = []
-    end
-    router.history[message.id] = append!(router.history[message.id], remote)
-end
-
-function sprayandwait_msg_known(sim::NetSim, routerId::Int16, message::Message)::Bool
-    router = sim.nodes[routerId].router.core
-    return haskey(router.history, message.id)
-end
-
-function sprayandwait_has_been_spread(sim::NetSim, routerId::Int16, remote::Int16, message::Message)::Bool
-    router = sim.nodes[routerId].router.core
-    #println("HIST: ", length(keys(router.history)))
-    if !haskey(router.history, message.id)
-        return false
-    end
-    return remote in router.history[message.id]
-end
-
 @resumable function sprayandwait_forward(env::Environment, sim::NetSim, myId::Int16, message::Message)
     router = sim.nodes[myId].router.core
-    if message.dst in router.peers && !sprayandwait_has_been_spread(sim, myId, message.dst, message)
+    if message.dst in router.peers && !router_has_been_spread(sim, myId, message.dst, message)
         #println("attempting direct delivery of message ", message.id, " from ", message.src, " to ", message.dst, " via ", myId)
         sim.routingstats.started += 1
         p = @process node_send(env, sim, myId, message.dst, message)
         #@yield p
-        sprayandwait_remember(sim, myId, message.dst, message)
+        router_remember(sim, myId, message.dst, message)
 
         deleteat!(router.store, findall(x -> x == message, router.store))
     elseif message.metadata["copies"] > 1
@@ -52,7 +30,7 @@ end
                 return
             end
             neighbor = sim.nodes[n]
-            if !sprayandwait_has_been_spread(sim, myId, neighbor.id, message)
+            if !router_has_been_spread(sim, myId, neighbor.id, message)
                 if router.config["binary"] == false
                     message.metadata["copies"] -= 1
                 end
@@ -61,7 +39,7 @@ end
                 sim.routingstats.started += 1
                 p = @process node_send(env, sim, myId, neighbor.id, out_message)
                 #@yield p
-                sprayandwait_remember(sim, myId, neighbor.id, message)
+                router_remember(sim, myId, neighbor.id, message)
             end
         end
         #println("No route to ", message.dst, ", dropping message")
@@ -71,14 +49,14 @@ function sprayandwait_on_recv(env::Environment, sim::NetSim, src::Int16, myId::I
     router = sim.nodes[myId].router.core
     sim.routingstats.relayed += 1
     if length(router.store) < router.capacity
-        if sprayandwait_msg_known(sim, myId, message)
+        if router_msg_known(sim, myId, message)
             #if message in router.store
             #println("Message ", message.id, " already in store")
             sim.routingstats.dups += 1
-            sprayandwait_remember(sim, myId, src, message)
+            router_remember(sim, myId, src, message)
             #end
         else
-            sprayandwait_remember(sim, myId, src, message)
+            router_remember(sim, myId, src, message)
             push!(router.store, message)
             message.hops += 1
             #push!(router.store, message)
