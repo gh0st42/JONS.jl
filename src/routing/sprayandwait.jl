@@ -89,5 +89,9 @@ function SprayAndWaitRouter(capacity::Int, discovery_interval::Float64, copies::
     router = Router(capacity, discovery_interval)
     router.config["copies"] = copies
     router.config["binary"] = binary
-    return RouterImpl("SprayAndWait", router, sprayandwait_init, sprayandwait_on_recv, sprayandwait_on_new_peer, sprayandwait_add)
+    name = "SprayAndWait_" * string(copies)
+    if binary
+        name = "Binary" * name
+    end
+    return RouterImpl(name, router, sprayandwait_init, sprayandwait_on_recv, sprayandwait_on_new_peer, sprayandwait_add)
 end
