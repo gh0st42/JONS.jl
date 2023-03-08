@@ -15,7 +15,6 @@ function Base.show(io::IO, netstats::NetStats)
   println(io, "  Messages received: ", netstats.rx)
   println(io, "  Messages dropped: ", netstats.drop)
 end
-
 function Base.show(io::IO, routingstats::RoutingStats)
   println(io, "Routing stats:")
   println(io, "  Bundles created: ", routingstats.created)
@@ -39,6 +38,11 @@ function struct_to_dataframe(s)
   return DataFrame(hcat(still_vector...), collect(fields))
 end
 
+"""
+    bundle_stats(sim::NetSim)
+
+Return a dictionary with the current routing statistics.
+"""
 function bundle_stats(sim::NetSim)
   return Dict("created" => sim.routingstats.created,
     "started" => sim.routingstats.started,
@@ -54,6 +58,11 @@ function bundle_stats(sim::NetSim)
     "latency_avg" => sim.routingstats.latency / sim.routingstats.delivered)
 end
 
+"""
+    net_stats(sim::NetSim)
+
+Return a dictionary with the current network statistics.
+"""
 function net_stats(sim::NetSim)
   return Dict("tx" => sim.netstats.tx,
     "rx" => sim.netstats.rx,

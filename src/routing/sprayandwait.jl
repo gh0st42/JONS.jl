@@ -14,6 +14,7 @@ end
 @resumable function sprayandwait_forward(env::Environment, sim::NetSim, myId::Int16, message::Message)
     router = sim.nodes[myId].router.core
     if message.dst in router.peers && !router_has_been_spread(sim, myId, message.dst, message)
+        # direct delivery
         #println("attempting direct delivery of message ", message.id, " from ", message.src, " to ", message.dst, " via ", myId)
         sim.routingstats.started += 1
         p = @process node_send(env, sim, myId, message.dst, message)
@@ -31,11 +32,14 @@ end
             end
             neighbor = sim.nodes[n]
             if !router_has_been_spread(sim, myId, neighbor.id, message)
-                if router.config["binary"] == false
-                    message.metadata["copies"] -= 1
-                end
                 out_message = copy(message)
-                out_message.metadata["copies"] = 1
+                if router.config["binary"] == true
+                    message.metadata["copies"] = ceil(Int, message.metadata["copies"] / 2)
+                    out_message.metadata["copies"] = floor(Int, message.metadata["copies"] / 2)
+                else
+                    message.metadata["copies"] -= 1
+                    out_message.metadata["copies"] = 1
+                end
                 sim.routingstats.started += 1
                 p = @process node_send(env, sim, myId, neighbor.id, out_message)
                 #@yield p

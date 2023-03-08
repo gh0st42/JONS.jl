@@ -31,7 +31,7 @@ function sim_init(sim::NetSim)
   end
 end
 
-@resumable function sim_log_moves(env::Environment, sim::NetSim, interval::Float64)
+@resumable function sim_log_moves(env::Environment, sim::NetSim, interval::Float64=1.0)
   while true
     @yield timeout(env, interval)
     println("[", round(Int, now(env)), "]")
@@ -86,6 +86,11 @@ function sim_report(sim::NetSim)
   end
 end
 
+"""
+    sim_report_df(sim::NetSim)
+
+Generate an animated GIF of the simulation.
+"""
 function sim_viz(sim::NetSim)
   if haskey(sim.config, "visualize") && sim.config["visualize"]
     gif(sim.anim, fps=10)

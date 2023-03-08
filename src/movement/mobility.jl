@@ -63,6 +63,11 @@ Base.show(io::IO, move::MovementStep) = print(io, "Step(t=", move.time, " n=", m
 
 Base.show(io::IO, scenario::OneScenario) = print(io, "OneScenario(duration=", scenario.duration, ", nn=", scenario.nn, ", w=", scenario.w, ", h=", scenario.h, ", #movements=", length(scenario.movements), ")")
 
+"""
+  generate_randomwaypoint_movement(duration::Float64, nn::Int, w::Float32, h::Float32, min_speed::Float32, max_speed::Float32, min_pause::Float32, max_pause::Float32)
+
+Generate a random waypoint movement for `nn` nodes in a `w`x`h` world for `duration` seconds.
+"""
 function generate_randomwaypoint_movement(duration::Float64, nn::Int, w::Float32, h::Float32, min_speed::Float32, max_speed::Float32, min_pause::Float32, max_pause::Float32)
   movements = MovementStep[]
   for i in 1:nn
@@ -96,6 +101,11 @@ function generate_randomwaypoint_movement(duration::Float64, nn::Int, w::Float32
   return OneScenario(duration, nn, w, h, movements)
 end
 
+"""
+  plot_one_scenario(scenario::OneScenario)
+
+Plot the movements of the nodes in `scenario`.
+"""
 function plot_one_scenario(scenario::OneScenario)
   plt = nothing
   for node in 1:scenario.nn
@@ -120,6 +130,11 @@ function plot_one_scenario(scenario::OneScenario)
   return plt
 end
 
+"""
+  parse_one_movement(file::String)
+
+Parse a movement file with node positions in TheONE format.
+"""
 function parse_one_movement(file::String)
   scenario = OneScenario(0.0, 0, 0.0, 0.0, MovementStep[])
   lines = readlines(file)
