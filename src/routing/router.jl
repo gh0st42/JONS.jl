@@ -1,5 +1,7 @@
 include("epidemic.jl")
 include("sprayandwait.jl")
+include("directdelivery.jl")
+include("firstcontact.jl")
 
 function Base.show(io::IO, router::Router)
   print(io, "Router with capacity ", router.capacity, " and ", length(router.store), " messages")
