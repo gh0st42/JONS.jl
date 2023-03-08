@@ -1,35 +1,15 @@
 
-function router_add(sim::NetSim, routerId::Int16, message::Message)
+function epidemic_add(sim::NetSim, routerId::Int16, message::Message)
   router = sim.nodes[routerId].router.core
   if length(router.store) < router.capacity
     push!(router.store, message)
-    @process router_forward(sim.env, sim, routerId, message)
+    @process epidemic_forward(sim.env, sim, routerId, message)
   else
     #println("Router full, dropping message")
   end
 end
 
-function router_remember(sim::NetSim, routerId::Int16, remote::Int16, message::Message)
-  router = sim.nodes[routerId].router.core
-  if !haskey(router.history, message.id)
-    router.history[message.id] = []
-  end
-  router.history[message.id] = append!(router.history[message.id], remote)
-end
-function router_msg_known(sim::NetSim, routerId::Int16, message::Message)::Bool
-  router = sim.nodes[routerId].router.core
-  return haskey(router.history, message.id)
-end
-function router_has_been_spread(sim::NetSim, routerId::Int16, remote::Int16, message::Message)::Bool
-  router = sim.nodes[routerId].router.core
-  #println("HIST: ", length(keys(router.history)))
-  if !haskey(router.history, message.id)
-    return false
-  end
-  return remote in router.history[message.id]
-end
-
-@resumable function router_forward(env::Environment, sim::NetSim, myId::Int16, message::Message)
+@resumable function epidemic_forward(env::Environment, sim::NetSim, myId::Int16, message::Message)
   router = sim.nodes[myId].router.core
   if message.dst in router.peers && !router_has_been_spread(sim, myId, message.dst, message)
     #println("attempting direct delivery of message ", message.id, " to ", message.dst, " from ", from)
@@ -65,7 +45,7 @@ end
     #println("No route to ", message.dst, ", dropping message")
   end
 end
-function router_on_recv(env::Environment, sim::NetSim, src::Int16, myId::Int16, message::Message)
+function epidemic_on_recv(env::Environment, sim::NetSim, src::Int16, myId::Int16, message::Message)
   router = sim.nodes[myId].router.core
   sim.routingstats.relayed += 1
   if length(router.store) < router.capacity
@@ -87,7 +67,7 @@ function router_on_recv(env::Environment, sim::NetSim, src::Int16, myId::Int16, 
         sim.routingstats.latency += now(env) - message.created
         sim.routingstats.hops += message.hops
       else
-        @process router_forward(env, sim, myId, message)
+        @process epidemic_forward(env, sim, myId, message)
       end
     end
   else
@@ -95,20 +75,19 @@ function router_on_recv(env::Environment, sim::NetSim, src::Int16, myId::Int16, 
   end
 end
 
-function router_init(sim::NetSim, node::Node)
-  @process router_discovery(sim.env, sim, node.router.core, node)
+function epidemic_init(sim::NetSim, node::Node)
 end
 
-function router_on_new_peer(env::Environment, sim::NetSim, mynodid::Int16, new_peer::Int16)
+function epidemic_on_new_peer(env::Environment, sim::NetSim, mynodid::Int16, new_peer::Int16)
   router = sim.nodes[mynodid].router.core
   #println("PEERS: ", length(router.peers))
   #println("Router ", mynodid, " discovered new peer ", new_peer)
   for message in router.store
-    @process router_forward(env, sim, mynodid, message)
+    @process epidemic_forward(env, sim, mynodid, message)
   end
 end
 
 function EpidemicRouter(capacity::Int, discovery_interval::Float64)::RouterImpl
   router = Router(capacity, discovery_interval)
-  return RouterImpl("Epidemic", router, router_init, router_on_recv, router_add)
+  return RouterImpl("Epidemic", router, epidemic_init, epidemic_on_recv, epidemic_on_new_peer, epidemic_add)
 end

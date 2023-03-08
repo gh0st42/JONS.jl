@@ -61,12 +61,13 @@ mutable struct Router
   peers::Vector{Int16}
   discovery_interval::Float64
   history::Dict{String,Vector{Int16}}
-  function Router(capacity::Int, discovery_interval::Float64)
-    new(Vector{Message}(), capacity, Vector{Int16}(), discovery_interval, Dict{String,Vector{Int16}}())
+  config::Dict
+  function Router(capacity::Int, discovery_interval::Float64, config::Dict=Dict())
+    new(Vector{Message}(), capacity, Vector{Int16}(), discovery_interval, Dict{String,Vector{Int16}}(), config)
   end
 end
 
-Base.copy(r::Router) = Router(r.capacity, r.discovery_interval)
+Base.copy(r::Router) = Router(r.capacity, r.discovery_interval, copy(r.config))
 
 struct RouterImpl
   # Router Type Name
@@ -77,11 +78,14 @@ struct RouterImpl
   init::Function
   # Receive message callback
   onrecv::Function
+  # New peer discovered
+  onpeer::Function
   # Add message to router
   add::Function
 end
 
-Base.copy(r::RouterImpl) = RouterImpl(r.name, copy(r.core), r.init, r.onrecv, r.add)
+Base.copy(r::RouterImpl) = RouterImpl(r.name, copy(r.core), r.init, r.onrecv, r.onpeer, r.add)
+Base.show(io::IO, r::RouterImpl) = print(io, r.name)
 
 mutable struct Node
   id::Int16
@@ -123,18 +127,19 @@ end
 
 mutable struct NetSim
   env::Environment
-  duration::Int
-  world::Tuple{Int,Int}
+  duration::Float64
+  world::Tuple{Float32,Float32}
   nodes::Vector{Node}
+  move_idx::Int
   movements::Vector{MovementStep}
   msggens::Vector{MessageGeneratorConfig}
   netstats::NetStats
   routingstats::RoutingStats
   anim::Animation
   config::Dict
-  function NetSim(duration::Int, world::Tuple{Int,Int}, nodes::Vector{Node}, movements::Vector{MovementStep}, msggens::Vector{MessageGeneratorConfig}=MessageGeneratorConfig[], config::Dict=Dict{String,Any}())
+  function NetSim(duration::Float64, world::Tuple{Float32,Float32}, nodes::Vector{Node}, movements::Vector{MovementStep}, msggens::Vector{MessageGeneratorConfig}=MessageGeneratorConfig[], config::Dict=Dict{String,Any}())
     env = Simulation()
-    new(env, duration, world, nodes, movements, msggens, NetStats(), RoutingStats(), Animation(), config)
+    new(env, duration, world, nodes, 1, movements, msggens, NetStats(), RoutingStats(), Animation(), config)
   end
 end
 

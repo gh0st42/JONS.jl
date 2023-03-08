@@ -1,17 +1,19 @@
 import Dates
+using DataFrames
 
 function sim_init(sim::NetSim)
   @info "initializing simulation"
 
   for i in 1:length(sim.nodes)
     #node_calc_neighbors(sim.nodes[i], sim.nodes)
+    router_init(sim, sim.nodes[i])
     sim.nodes[i].router.init(sim, sim.nodes[i])
   end
 
   # initialize node movement
   #next_step = popfirst!(sim.movements)
   #@process move_next(sim.env, sim.nodes, sim.movements, sim.nodes[next_step.id], next_step)
-  move_init(sim.env, sim.nodes, sim.movements)
+  move_init(sim)
 
   for mgc in sim.msggens
     if mgc.interval[1] > 0 || mgc.interval[2] > 0
@@ -29,7 +31,7 @@ function sim_init(sim::NetSim)
   end
 end
 
-@resumable function sim_log_moves(env::Environment, sim::NetSim, interval::Float64)
+@resumable function sim_log_moves(env::Environment, sim::NetSim, interval::Float64=1.0)
   while true
     @yield timeout(env, interval)
     println("[", round(Int, now(env)), "]")
@@ -82,4 +84,21 @@ function sim_report(sim::NetSim)
     @info "generating visualization"
     gif(sim.anim, fps=10)
   end
+end
+
+"""
+    sim_report_df(sim::NetSim)
+
+Generate an animated GIF of the simulation.
+"""
+function sim_viz(sim::NetSim)
+  if haskey(sim.config, "visualize") && sim.config["visualize"]
+    gif(sim.anim, fps=10)
+  end
+end
+
+function sim_report_df(sim::NetSim)
+  netstats = struct_to_dataframe(sim.netstats)
+  routingstats = struct_to_dataframe(sim.routingstats)
+  return netstats, routingstats
 end
