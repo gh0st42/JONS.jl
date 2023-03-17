@@ -41,11 +41,28 @@ end
     end
   end
 end
+
+@resumable function sim_log_deliveryrate_over_time(env::Environment, sim::NetSim, interval::Float64=1.0)
+  sim.reports["dx_over_time"] = DataFrame(time=[], dx=[])
+  while true
+    @yield timeout(env, interval)
+    dx = 0
+    if sim.routingstats.created > 0
+      dx = sim.routingstats.delivered / sim.routingstats.created
+    end
+
+    push!(sim.reports["dx_over_time"], (round(Int, now(env)), dx))
+  end
+end
+
 function sim_run(sim::NetSim)
   @info "running simulation"
 
   if haskey(sim.config, "poslogger") && sim.config["poslogger"]
     @process sim_log_moves(sim.env, sim, 1.0)
+  end
+  if haskey(sim.config, "dx_over_time") && sim.config["dx_over_time"]
+    @process sim_log_deliveryrate_over_time(sim.env, sim, 1.0)
   end
   #@process sim_log_moves(sim.env, sim, 1.0)
 

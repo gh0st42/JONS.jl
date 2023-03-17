@@ -137,9 +137,10 @@ mutable struct NetSim
   routingstats::RoutingStats
   anim::Animation
   config::Dict
+  reports::Dict{String,Any}
   function NetSim(duration::Float64, world::Tuple{Float32,Float32}, nodes::Vector{Node}, movements::Vector{MovementStep}, msggens::Vector{MessageGeneratorConfig}=MessageGeneratorConfig[], config::Dict=Dict{String,Any}())
     env = Simulation()
-    new(env, duration, world, nodes, 1, movements, msggens, NetStats(), RoutingStats(), Animation(), config)
+    new(env, duration, world, nodes, 1, movements, msggens, NetStats(), RoutingStats(), Animation(), config, Dict{String,Any}())
   end
 end
 

@@ -124,9 +124,9 @@ function plot_one_scenario(scenario::OneScenario)
       plt = scatter!(x, y, legend=true, markerstrokewidth=0.0, label="Node $node")
     end
   end
-  if plt !== nothing
-    display(plt)
-  end
+  #if plt !== nothing
+  #  display(plt)
+  #end
   return plt
 end
 
